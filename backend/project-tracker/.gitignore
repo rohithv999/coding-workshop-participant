@@ -1,0 +1,5 @@
+.pip_installed
+__pycache__/
+*.dist-info/
+psycopg*/
+typing_extensions.py
