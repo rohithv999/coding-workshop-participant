@@ -1,6 +1,7 @@
 """Initial data: creates a default admin if none exists."""
 
 import os
+import secrets
 
 from core.security import hash_password
 
@@ -35,4 +36,17 @@ def seed_admin(cur):
             DEFAULT_ADMIN["email"],
             DEFAULT_ADMIN["job_title"],
         ),
+    )
+
+
+
+def seed_jwt_secret(cur):
+    """Create the token signing secret once. Never overwrites an existing one."""
+    cur.execute(
+        """
+        INSERT INTO app_settings (key, value)
+        VALUES ('jwt_secret', %s)
+        ON CONFLICT (key) DO NOTHING
+        """,
+        (secrets.token_urlsafe(64),),
     )

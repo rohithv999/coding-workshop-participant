@@ -76,3 +76,11 @@ CREATE INDEX IF NOT EXISTS idx_assignments_project  ON project_assignments(proje
 CREATE INDEX IF NOT EXISTS idx_assignments_user     ON project_assignments(user_id);
 CREATE INDEX IF NOT EXISTS idx_milestones_project   ON milestones(project_id);
 CREATE INDEX IF NOT EXISTS idx_budget_adj_project   ON budget_adjustments(project_id);
+
+
+-- Application settings (e.g. the JWT signing secret)
+CREATE TABLE IF NOT EXISTS app_settings (
+    key        VARCHAR(100) PRIMARY KEY,
+    value      TEXT         NOT NULL,
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);

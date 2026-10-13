@@ -2,13 +2,14 @@
 
 import logging
 
+# Importing API modules registers their routes on the shared router
+import api.auth  # noqa: F401  pylint: disable=unused-import
 from core import db
-from core.http import ApiError, Router, error_response, response
+from core.app import router
+from core.http import ApiError, error_response, response
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-router = Router()
 
 
 @router.route("GET", "/")

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import psycopg
 from psycopg.rows import dict_row
-from core.seed import seed_admin
+from core.seed import seed_admin, seed_jwt_secret
 
 _conn = None
 
@@ -72,4 +72,21 @@ def ensure_schema():
         cur.execute("SELECT pg_advisory_xact_lock(424242)")
         cur.execute(sql)
         seed_admin(cur)
+        seed_jwt_secret(cur)
     _schema_ready = True
+
+
+
+_settings_cache = {}
+
+
+def get_setting(key):
+    """Read a value from app_settings (cached per Lambda container)."""
+    if key not in _settings_cache:
+        with transaction() as cur:
+            cur.execute("SELECT value FROM app_settings WHERE key = %s", (key,))
+            row = cur.fetchone()
+        if row is None:
+            raise RuntimeError(f"Missing app setting: {key}")
+        _settings_cache[key] = row["value"]
+    return _settings_cache[key]

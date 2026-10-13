@@ -3,7 +3,8 @@
 import base64
 import json
 import re
-
+from datetime import date, datetime
+from decimal import Decimal
 
 class ApiError(Exception):
     """Raise anywhere in a handler to return a clean error response."""
@@ -15,13 +16,22 @@ class ApiError(Exception):
         self.details = details
 
 
+def _json_default(value):
+    """Convert database types into JSON-friendly values."""
+    if isinstance(value, Decimal):
+        return float(value)
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    return str(value)
+
+
 def response(status, body=None):
     resp = {"statusCode": status, "headers": {"Content-Type": "application/json"}}
     if body is not None:
-        resp["body"] = json.dumps(body, default=str)
+        resp["body"] = json.dumps(body, default=_json_default)
     return resp
 
-
+    
 def error_response(status, message, details=None):
     body = {"error": message}
     if details:
