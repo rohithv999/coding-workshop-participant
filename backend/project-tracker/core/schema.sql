@@ -84,3 +84,26 @@ CREATE TABLE IF NOT EXISTS app_settings (
     value      TEXT         NOT NULL,
     created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
+-- Hours and cost per assignment. 8h/day, Monday-Friday only.
+-- planned_* covers the full assignment; worked_* stops at today.
+CREATE OR REPLACE VIEW assignment_costs AS
+SELECT
+    a.id AS assignment_id,
+    a.project_id,
+    a.user_id,
+    a.hours_per_day,
+    a.start_date,
+    a.end_date,
+    u.hourly_rate,
+    a.hours_per_day * (
+        SELECT COUNT(*)
+        FROM generate_series(a.start_date, a.end_date, INTERVAL '1 day') AS d
+        WHERE EXTRACT(ISODOW FROM d) < 6
+    ) AS planned_hours,
+    a.hours_per_day * (
+        SELECT COUNT(*)
+        FROM generate_series(a.start_date, LEAST(a.end_date, CURRENT_DATE), INTERVAL '1 day') AS d
+        WHERE EXTRACT(ISODOW FROM d) < 6
+    ) AS worked_hours
+FROM project_assignments a
+JOIN users u ON u.id = a.user_id;
