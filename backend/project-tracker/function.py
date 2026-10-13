@@ -19,6 +19,7 @@ def health(_req):
 
 def handler(event=None, context=None):
     try:
+        db.ensure_schema()
         return router.dispatch(event or {})
     except ApiError as exc:
         return error_response(exc.status, exc.message, exc.details)
