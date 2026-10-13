@@ -7,6 +7,7 @@ import api.auth  # noqa: F401  pylint: disable=unused-import
 import api.users  # noqa: F401  pylint: disable=unused-import
 import api.projects  # noqa: F401  pylint: disable=unused-import
 import api.assignments  # noqa: F401  pylint: disable=unused-import
+import api.milestones  # noqa: F401  pylint: disable=unused-import
 from core import db
 from core.app import router
 from core.http import ApiError, error_response, response
