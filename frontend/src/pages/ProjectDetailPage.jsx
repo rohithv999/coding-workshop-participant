@@ -17,6 +17,7 @@ import ErrorState from "../components/ErrorState";
 import LoadingState from "../components/LoadingState";
 import MilestonesTab from "../components/projects/MilestonesTab";
 import ProjectFormDialog from "../components/projects/ProjectFormDialog";
+import TeamTab from "../components/projects/TeamTab";
 import {
   BudgetBar, MilestoneProgress, ProjectStatusChip, RiskChips,
 } from "../components/projects/ProjectIndicators";
@@ -252,7 +253,9 @@ export default function ProjectDetailPage() {
       {tab === "milestones" && (
         <MilestonesTab project={project} canManage={canManage} onChanged={reload} onNotice={setNotice} />
       )}
-      {tab === "team" && <ComingNext name="Team" />}
+      {tab === "team" && (
+        <TeamTab project={project} canManage={canManage} onChanged={reload} onNotice={setNotice} />
+      )}
       {tab === "budget" && showBudgetTab && <ComingNext name="Budget history" />}
 
       {editing && (
