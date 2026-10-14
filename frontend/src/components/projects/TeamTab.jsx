@@ -26,6 +26,7 @@ export default function TeamTab({ project, canManage, onChanged, onNotice }) {
   const [formFor, setFormFor] = useState(null); // null = closed, {} = new, {assignment} = edit
   const [teamOpen, setTeamOpen] = useState(false);
   const [removing, setRemoving] = useState(null);
+  const [showPast, setShowPast] = useState(false);
   const today = todayIso();
 
   const refreshAll = () => {
@@ -38,6 +39,9 @@ export default function TeamTab({ project, canManage, onChanged, onNotice }) {
 
   // Employees don't receive cost fields from the API
   const showCosts = assignments.length > 0 && assignments[0].planned_cost !== undefined;
+  const current = assignments.filter((a) => a.end_date >= today);
+  const past = assignments.filter((a) => a.end_date < today);
+  const visible = showPast ? [...current, ...past] : current;
 
   return (
     <>
@@ -52,15 +56,15 @@ export default function TeamTab({ project, canManage, onChanged, onNotice }) {
         </Stack>
       )}
 
-      {assignments.length === 0 ? (
+      {visible.length === 0 ? (
         <EmptyState
           icon={<GroupsIcon fontSize="inherit" />}
-          title="No one assigned yet"
+          title={past.length ? "No current team members" : "No one assigned yet"}
           message={canManage ? "Add people individually, or assign a manager's whole team at once." : undefined}
         />
       ) : (
         <Stack spacing={1.5}>
-          {assignments.map((a) => {
+          {visible.map((a) => {
             const ended = a.end_date < today;
             return (
               <Card key={a.id}>
@@ -113,6 +117,14 @@ export default function TeamTab({ project, canManage, onChanged, onNotice }) {
         </Stack>
       )}
 
+      {past.length > 0 && (
+        <Box sx={{ mt: 2, textAlign: "center" }}>
+          <Button size="small" onClick={() => setShowPast((value) => !value)}>
+            {showPast ? "Hide past members" : `Show past members (${past.length})`}
+          </Button>
+        </Box>
+      )}
+
       {formFor && (
         <AssignmentFormDialog
           project={project}
@@ -143,9 +155,9 @@ export default function TeamTab({ project, canManage, onChanged, onNotice }) {
           open
           title={`Remove ${removing.user_name}?`}
           message={
-            removing.start_date > today
+            removing.start_date >= today
               ? "Their assignment hasn't started yet, so it will be removed completely."
-              : "Their assignment will end today. Hours already worked stay on the project's budget."
+              : "They'll be removed starting today. Hours they've already worked stay on the project's budget, and they'll move to past members."
           }
           confirmLabel="Remove"
           confirmColor="error"

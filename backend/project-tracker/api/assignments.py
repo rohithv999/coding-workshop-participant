@@ -1,6 +1,6 @@
 """Assignments API: put employees on projects with hours/day and dates."""
 
-from datetime import date
+from datetime import date, timedelta
 
 import psycopg
 
@@ -273,8 +273,9 @@ def update_assignment(req):
 @require_auth("admin", "manager")
 def remove_assignment(req):
     """
-    Not started yet -> removed (nothing was worked).
-    Already started -> ended today, so hours already worked still count toward the budget.
+    Starts today or later -> removed (nothing was worked before today).
+    Already started -> ended yesterday, so they're off the project from today and
+    hours already worked still count toward the budget.
     """
     project_id = path_id(req)
     assignment_id = path_id(req, "assignment_id")
@@ -284,20 +285,21 @@ def remove_assignment(req):
         current = _fetch_assignment(cur, project_id, assignment_id)
 
         today = date.today()
+        yesterday = today - timedelta(days=1)
         label = f"{current['user_name']} on {project['name']}"
-        if current["start_date"] > today:
+        if current["start_date"] >= today:
             cur.execute("DELETE FROM project_assignments WHERE id = %s", (assignment_id,))
             audit.record(
                 cur, req.user, "delete", "assignment", assignment_id, label,
                 audit.snapshot(current, ("user_id", "user_name", "hours_per_day", "start_date", "end_date")), project_id=project_id,
             )
-        elif current["end_date"] > today:
+        elif current["end_date"] >= today:
             cur.execute(
                 "UPDATE project_assignments SET end_date = %s WHERE id = %s",
-                (today, assignment_id),
+                (yesterday, assignment_id),
             )
             audit.record(
                 cur, req.user, "end", "assignment", assignment_id, label,
-                audit.diff(current, {"end_date": today}), project_id=project_id,
+                audit.diff(current, {"end_date": yesterday}), project_id=project_id,
             )
     return response(204)
