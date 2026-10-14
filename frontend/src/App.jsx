@@ -3,6 +3,7 @@ import AppLayout from "./components/AppLayout";
 import EmptyState from "./components/EmptyState";
 import PageHeader from "./components/PageHeader";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ArchivePage from "./pages/ArchivePage";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
@@ -36,7 +37,7 @@ export default function App() {
             <Route path="users" element={<UsersPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={["admin"]} />}>
-            <Route path="archive" element={<ComingSoon title="Archive" />} />
+            <Route path="archive" element={<ArchivePage />} />
           </Route>
         </Route>
       </Route>
