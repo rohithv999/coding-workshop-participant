@@ -5,6 +5,7 @@ import PageHeader from "./components/PageHeader";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
+import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
 
 // Temporary placeholder - each one gets replaced by a real page in the next steps
@@ -27,7 +28,7 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="projects" element={<ProjectsPage />} />
-          <Route path="projects/:projectId" element={<ComingSoon title="Project details" />} />
+          <Route path="projects/:projectId" element={<ProjectDetailPage />} />
           <Route path="profile" element={<ComingSoon title="My profile" />} />
 
           <Route element={<ProtectedRoute roles={["admin", "manager"]} />}>
