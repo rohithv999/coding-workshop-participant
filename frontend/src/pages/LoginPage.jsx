@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useAuth } from "../context/auth-context";
+import ColorModeToggle from "../components/ColorModeToggle";
 
 export default function LoginPage() {
   const { user, login, sessionExpired } = useAuth();
@@ -44,6 +45,9 @@ export default function LoginPage() {
 
   return (
     <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center", p: 2, bgcolor: "background.default" }}>
+      <Box sx={{ position: "fixed", top: 16, right: 16 }}>
+        <ColorModeToggle color="default" />
+      </Box>
       <Card sx={{ width: "100%", maxWidth: 400 }}>
         <CardContent sx={{ p: 4 }}>
           <Stack spacing={1} sx={{ mb: 3, alignItems: "center", textAlign: "center" }}>

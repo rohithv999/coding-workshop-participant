@@ -15,6 +15,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useAuth } from "../context/auth-context";
+import ColorModeToggle from "./ColorModeToggle";
 
 const DRAWER_WIDTH = 240;
 
@@ -100,6 +101,7 @@ export default function AppLayout() {
               sx={{ mr: 1.5, bgcolor: "rgba(255,255,255,0.2)", color: "inherit" }}
             />
           )}
+          <ColorModeToggle />
           <Tooltip title="Account">
             <IconButton onClick={(e) => setMenuAnchor(e.currentTarget)} aria-label="Open account menu">
               <Avatar sx={{ width: 34, height: 34, bgcolor: "secondary.main", fontSize: 14 }}>{initials}</Avatar>
