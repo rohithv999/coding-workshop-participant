@@ -9,6 +9,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
+import BarChartIcon from "@mui/icons-material/BarChart";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { label: "Dashboard", path: "/", icon: <DashboardOutlinedIcon />, roles: null, end: true },
   { label: "Projects", path: "/projects", icon: <FolderOutlinedIcon />, roles: null },
   { label: "Users", path: "/users", icon: <PeopleOutlinedIcon />, roles: ["admin", "manager"] },
+  { label: "Workload", path: "/workload", icon: <BarChartIcon />, roles: ["admin", "manager"] },
   { label: "Archive", path: "/archive", icon: <ArchiveOutlinedIcon />, roles: ["admin"] },
   { label: "Audit log", path: "/audit-log", icon: <HistoryIcon />, roles: ["admin"] },
   { label: "My profile", path: "/profile", icon: <PersonOutlinedIcon />, roles: null },

@@ -143,3 +143,18 @@ DROP TRIGGER IF EXISTS audit_log_no_truncate ON audit_log;
 CREATE TRIGGER audit_log_no_truncate
     BEFORE TRUNCATE ON audit_log
     FOR EACH STATEMENT EXECUTE FUNCTION audit_log_is_append_only();
+
+-- Non-labor project costs (technology, licenses, travel...) that count toward the budget
+CREATE TABLE IF NOT EXISTS project_costs (
+    id          SERIAL PRIMARY KEY,
+    project_id  INTEGER        NOT NULL REFERENCES projects(id),
+    category    VARCHAR(30)    NOT NULL
+                CHECK (category IN ('technology', 'software', 'hardware', 'services', 'travel', 'other')),
+    description VARCHAR(255)   NOT NULL,
+    amount      NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
+    cost_date   DATE           NOT NULL,
+    created_by  INTEGER        NOT NULL REFERENCES users(id),
+    created_at  TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ    NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_costs_project ON project_costs(project_id);

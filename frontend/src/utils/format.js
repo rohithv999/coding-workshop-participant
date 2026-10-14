@@ -55,3 +55,12 @@ export function percent(part, total) {
   if (!whole) return 0;
   return Math.round((Number(part) / whole) * 100);
 }
+
+export const COST_CATEGORY_LABELS = {
+  technology: "Technology",
+  software: "Software",
+  hardware: "Hardware",
+  services: "Services",
+  travel: "Travel",
+  other: "Other",
+};

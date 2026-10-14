@@ -27,9 +27,12 @@ SELECT
     COALESCE(c.team_size, 0)        AS team_size,
     COALESCE(c.planned_hours, 0)    AS planned_hours,
     COALESCE(c.worked_hours, 0)     AS worked_hours,
-    COALESCE(c.committed, 0)        AS budget_committed,
-    COALESCE(c.spent, 0)            AS budget_spent,
-    p.budget - COALESCE(c.spent, 0) AS budget_remaining,
+    COALESCE(c.committed, 0) + COALESCE(oc.total, 0)         AS budget_committed,
+    COALESCE(c.spent, 0) + COALESCE(oc.spent, 0)             AS budget_spent,
+    p.budget - COALESCE(c.spent, 0) - COALESCE(oc.spent, 0)  AS budget_remaining,
+    COALESCE(c.spent, 0)            AS labor_spent,
+    COALESCE(oc.spent, 0)           AS other_costs_spent,
+    COALESCE(oc.total, 0)           AS other_costs_total,
     COALESCE(ms.total, 0)           AS milestones_total,
     COALESCE(ms.complete, 0)        AS milestones_complete
 FROM projects p
@@ -51,6 +54,13 @@ LEFT JOIN (
     FROM milestones
     GROUP BY project_id
 ) ms ON ms.project_id = p.id
+LEFT JOIN (
+    SELECT project_id,
+           SUM(amount)                                         AS total,
+           SUM(amount) FILTER (WHERE cost_date <= CURRENT_DATE) AS spent
+    FROM project_costs
+    GROUP BY project_id
+) oc ON oc.project_id = p.id
 """
 
 
@@ -77,7 +87,10 @@ def _with_progress(project):
     return project
 
 
-_BUDGET_FIELDS = ("budget", "budget_committed", "budget_spent", "budget_remaining", "is_over_budget")
+_BUDGET_FIELDS = (
+    "budget", "budget_committed", "budget_spent", "budget_remaining", "is_over_budget",
+    "labor_spent", "other_costs_spent", "other_costs_total",
+)
 
 
 def _for_viewer(project, user):

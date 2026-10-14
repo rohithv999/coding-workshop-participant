@@ -5,7 +5,7 @@ from core.app import router
 from core.auth import require_auth
 from core.http import ApiError, response
 
-ENTITY_TYPES = ("user", "project", "assignment", "milestone")
+ENTITY_TYPES = ("user", "project", "assignment", "milestone", "cost")
 _DEFAULT_LIMIT = 50
 _MAX_LIMIT = 200
 _ID_FILTERS = ("actor_id", "project_id", "entity_id")

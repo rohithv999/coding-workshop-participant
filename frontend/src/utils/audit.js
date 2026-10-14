@@ -1,4 +1,6 @@
-import { formatCurrency, formatDate, MILESTONE_STATUS_LABELS, ROLE_LABELS } from "./format";
+import {
+  COST_CATEGORY_LABELS, formatCurrency, formatDate, MILESTONE_STATUS_LABELS, ROLE_LABELS,
+} from "./format";
 
 export const ACTION_LABELS = {
   create: "Created",
@@ -29,6 +31,7 @@ export const ENTITY_LABELS = {
   project: "Project",
   assignment: "Assignment",
   milestone: "Milestone",
+  cost: "Cost",
 };
 
 const FIELD_LABELS = {
@@ -49,13 +52,17 @@ const FIELD_LABELS = {
   hours_per_day: "Hours/day",
   user_name: "Employee",
   via: "Via",
+  category: "Category",
+  amount: "Amount",
+  cost_date: "Date",
 };
 
 const STATUS_LABELS = { ...MILESTONE_STATUS_LABELS, active: "Active", done: "Done" };
 
 function formatValue(field, value) {
   if (value === null || value === undefined || value === "") return "—";
-  if (field === "budget" || field === "hourly_rate") return formatCurrency(value);
+  if (field === "budget" || field === "hourly_rate" || field === "amount") return formatCurrency(value);
+  if (field === "category") return COST_CATEGORY_LABELS[value] || value;
   if (field.endsWith("_date")) return formatDate(value);
   if (field === "status") return STATUS_LABELS[value] || value;
   if (field === "role") return ROLE_LABELS[value] || value;

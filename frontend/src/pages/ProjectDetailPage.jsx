@@ -16,6 +16,7 @@ import EmptyState from "../components/EmptyState";
 import ErrorState from "../components/ErrorState";
 import LoadingState from "../components/LoadingState";
 import BudgetHistoryTab from "../components/projects/BudgetHistoryTab";
+import CostsTab from "../components/projects/CostsTab";
 import MilestonesTab from "../components/projects/MilestonesTab";
 import ProjectFormDialog from "../components/projects/ProjectFormDialog";
 import TeamTab from "../components/projects/TeamTab";
@@ -75,6 +76,8 @@ function OverviewTab({ project }) {
             {showBudget && <Stat label="Committed" value={formatCurrency(project.budget_committed)} />}
             {showBudget && <Stat label="Spent" value={formatCurrency(project.budget_spent)} />}
             {showBudget && <Stat label="Remaining" value={formatCurrency(project.budget_remaining)} />}
+            {showBudget && <Stat label="Labor spent" value={formatCurrency(project.labor_spent)} />}
+            {showBudget && <Stat label="Other costs spent" value={formatCurrency(project.other_costs_spent)} />}
           </Box>
         </CardContent>
       </Card>
@@ -243,6 +246,7 @@ export default function ProjectDetailPage() {
         <Tab value="overview" label="Overview" />
         <Tab value="milestones" label={`Milestones (${project.milestones_total})`} />
         <Tab value="team" label={`Team (${project.team_size})`} />
+        {showBudgetTab && <Tab value="costs" label="Costs" />}
         {showBudgetTab && <Tab value="budget" label="Budget history" />}
       </Tabs>
 
@@ -252,6 +256,9 @@ export default function ProjectDetailPage() {
       )}
       {tab === "team" && (
         <TeamTab project={project} canManage={canManage} onChanged={reload} onNotice={setNotice} />
+      )}
+      {tab === "costs" && showBudgetTab && (
+        <CostsTab project={project} canManage={canManage} onChanged={reload} onNotice={setNotice} />
       )}
       {tab === "budget" && showBudgetTab && <BudgetHistoryTab project={project} />}
 

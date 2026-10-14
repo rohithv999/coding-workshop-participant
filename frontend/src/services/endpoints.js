@@ -65,3 +65,14 @@ export const milestonesApi = {
 export const auditApi = {
   list: (filters) => api.get("/audit-log", filters),
 };
+
+export const workloadApi = {
+  get: (filters) => api.get("/workload", filters),
+};
+
+export const costsApi = {
+  list: (projectId) => api.get(`/projects/${projectId}/costs`),
+  create: (projectId, data) => api.post(`/projects/${projectId}/costs`, data),
+  update: (projectId, costId, data) => api.put(`/projects/${projectId}/costs/${costId}`, data),
+  remove: (projectId, costId) => api.del(`/projects/${projectId}/costs/${costId}`),
+};

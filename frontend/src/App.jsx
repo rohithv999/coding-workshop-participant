@@ -9,6 +9,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import UsersPage from "./pages/UsersPage";
+import WorkloadPage from "./pages/WorkloadPage";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
 
           <Route element={<ProtectedRoute roles={["admin", "manager"]} />}>
             <Route path="users" element={<UsersPage />} />
+            <Route path="workload" element={<WorkloadPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={["admin"]} />}>
             <Route path="archive" element={<ArchivePage />} />
