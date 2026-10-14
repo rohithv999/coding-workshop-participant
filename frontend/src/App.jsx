@@ -7,6 +7,7 @@ import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
+import UsersPage from "./pages/UsersPage";
 
 // Temporary placeholder - each one gets replaced by a real page in the next steps
 function ComingSoon({ title }) {
@@ -32,7 +33,7 @@ export default function App() {
           <Route path="profile" element={<ComingSoon title="My profile" />} />
 
           <Route element={<ProtectedRoute roles={["admin", "manager"]} />}>
-            <Route path="users" element={<ComingSoon title="Users" />} />
+            <Route path="users" element={<UsersPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={["admin"]} />}>
             <Route path="archive" element={<ComingSoon title="Archive" />} />
