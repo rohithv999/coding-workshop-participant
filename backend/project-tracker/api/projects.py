@@ -77,6 +77,17 @@ def _with_progress(project):
     return project
 
 
+_BUDGET_FIELDS = ("budget", "budget_committed", "budget_spent", "budget_remaining", "is_over_budget")
+
+
+def _for_viewer(project, user):
+    """Employees see progress and hours, but not money (it could reveal pay rates)."""
+    if user["role"] == "employee":
+        for field in _BUDGET_FIELDS:
+            project.pop(field, None)
+    return project
+
+
 def fetch_visible_project(cur, project_id, user):
     """Load one project with its stats, or 404 if it doesn't exist or isn't visible."""
     condition, params = _visibility(user)
@@ -84,7 +95,7 @@ def fetch_visible_project(cur, project_id, user):
     project = cur.fetchone()
     if project is None:
         raise ApiError(404, "Project not found")
-    return _with_progress(project)
+    return _for_viewer(_with_progress(project), user)
 
 
 def ensure_can_manage(user, project):
@@ -180,7 +191,7 @@ def list_projects(req):
             "ORDER BY p.status, p.end_date, p.name",
             params,
         )
-        projects = [_with_progress(row) for row in cur.fetchall()]
+        projects = [_for_viewer(_with_progress(row), req.user) for row in cur.fetchall()]
     return response(200, projects)
 
 
