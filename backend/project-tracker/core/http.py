@@ -39,13 +39,22 @@ def error_response(status, message, details=None):
     return response(status, body)
 
 
+def _strip_api_prefix(path):
+    """CloudFront forwards /api/{service}/... unchanged, while the local proxy strips it.
+    Normalize both so routes always match without the prefix."""
+    parts = path.split("/")
+    if len(parts) >= 3 and parts[1] == "api":
+        return "/" + "/".join(parts[3:])
+    return path
+
+
 class Request:
     """Wraps a Lambda function URL event (payload format 2.0)."""
 
     def __init__(self, event, params=None):
         http = (event.get("requestContext") or {}).get("http") or {}
         self.method = http.get("method", "GET").upper()
-        self.path = event.get("rawPath") or "/"
+        self.path = _strip_api_prefix(event.get("rawPath") or "/")
         self.params = params or {}
         self.query = event.get("queryStringParameters") or {}
         self.headers = {k.lower(): v for k, v in (event.get("headers") or {}).items()}
