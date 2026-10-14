@@ -75,7 +75,10 @@ async function parseBody(res) {
   }
 }
 
-export async function request(path, { method = "GET", body, query, auth = true, retry = true } = {}) {
+export async function request(
+  path,
+  { method = "GET", body, query, auth = true, retry = true, wakeRetry = true } = {},
+) {
   const url = new URL(`${BASE_URL}${path}`);
   Object.entries(query || {}).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, value);
@@ -99,6 +102,13 @@ export async function request(path, { method = "GET", body, query, auth = true, 
   // Access token expired: refresh once, then retry the original request
   if (res.status === 401 && auth && retry && (await refreshTokens())) {
     return request(path, { method, body, query, auth, retry: false });
+  }
+
+  // 503 = database waking up (e.g. Aurora Serverless resuming). Nothing was saved,
+  // so it's safe to wait briefly and try once more, even for POST/PUT/DELETE.
+  if (res.status === 503 && wakeRetry) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    return request(path, { method, body, query, auth, retry, wakeRetry: false });
   }
 
   const data = await parseBody(res);

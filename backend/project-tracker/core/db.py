@@ -1,6 +1,8 @@
 """PostgreSQL connection management (reused across Lambda invocations)."""
 
+import logging
 import os
+import time
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -9,6 +11,16 @@ from psycopg.rows import dict_row
 from core.seed import seed_admin, seed_jwt_secret
 
 _conn = None
+logger = logging.getLogger(__name__)
+
+# Aurora Serverless can pause when idle and take ~15-30s to resume. CloudFront gives up
+# after 30s, so retry short attempts (3 x 8s + pauses ~ 26s) instead of one long wait.
+CONNECT_TIMEOUT_SECONDS = 8
+CONNECT_ATTEMPTS = 3
+
+
+class DatabaseUnavailable(Exception):
+    """The database can't be reached yet (e.g. resuming from an idle pause)."""
 
 
 def _conninfo():
@@ -19,7 +31,7 @@ def _conninfo():
         f"user={os.getenv('POSTGRES_USER', 'test')} "
         f"password={os.getenv('POSTGRES_PASS', 'test')} "
         f"dbname={os.getenv('POSTGRES_NAME', 'test')} "
-        f"connect_timeout=15"
+        f"connect_timeout={CONNECT_TIMEOUT_SECONDS}"
     )
     if os.getenv("IS_LOCAL", "false") != "true":
         info += " sslmode=require"
@@ -28,9 +40,19 @@ def _conninfo():
 
 def get_conn():
     global _conn
-    if _conn is None or _conn.closed:
-        _conn = psycopg.connect(_conninfo(), row_factory=dict_row)
-    return _conn
+    if _conn is not None and not _conn.closed:
+        return _conn
+    last_error = None
+    for attempt in range(1, CONNECT_ATTEMPTS + 1):
+        try:
+            _conn = psycopg.connect(_conninfo(), row_factory=dict_row)
+            return _conn
+        except psycopg.OperationalError as exc:
+            last_error = exc
+            logger.warning("Database connection attempt %s/%s failed: %s", attempt, CONNECT_ATTEMPTS, exc)
+            if attempt < CONNECT_ATTEMPTS:
+                time.sleep(1)
+    raise DatabaseUnavailable("Database is not reachable yet") from last_error
 
 
 @contextmanager

@@ -31,6 +31,9 @@ def handler(event=None, context=None):
         return router.dispatch(event or {})
     except ApiError as exc:
         return error_response(exc.status, exc.message, exc.details)
+    except db.DatabaseUnavailable:
+        logger.warning("Database unavailable; returning 503")
+        return error_response(503, "The database is starting up. Please try again in a few seconds.")
     except Exception:  # pylint: disable=broad-except
         logger.exception("Unhandled error")
         return error_response(500, "Internal server error")
