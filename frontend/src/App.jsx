@@ -5,6 +5,7 @@ import PageHeader from "./components/PageHeader";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
+import ProjectsPage from "./pages/ProjectsPage";
 
 // Temporary placeholder - each one gets replaced by a real page in the next steps
 function ComingSoon({ title }) {
@@ -25,7 +26,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
-          <Route path="projects" element={<ComingSoon title="Projects" />} />
+          <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/:projectId" element={<ComingSoon title="Project details" />} />
           <Route path="profile" element={<ComingSoon title="My profile" />} />
 
