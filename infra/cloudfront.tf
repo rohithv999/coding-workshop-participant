@@ -39,13 +39,6 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
-  custom_error_response {
-    error_code            = 404
-    error_caching_min_ttl = 300
-    response_code         = 200
-    response_page_path    = "/index.html"
-  }
-
   # logging_config {
   #   include_cookies = false
   #   bucket          = var.aws_bucket
@@ -97,6 +90,12 @@ resource "aws_cloudfront_distribution" "this" {
     target_origin_id       = local.origin_id
     viewer_protocol_policy = "redirect-to-https"
 
+    # Serve index.html for client-side routes (see aws_cloudfront_function.spa_rewrite)
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = element(aws_cloudfront_function.spa_rewrite.*.arn, count.index)
+    }
+
     forwarded_values {
       query_string = false
 
@@ -146,4 +145,25 @@ resource "aws_s3_bucket_policy" "this" {
       }
     ]
   })
+}
+
+# Single-page app routing: paths without a file extension (e.g. /projects/3) are React routes,
+# so serve index.html. Real files (e.g. /assets/app.js) pass through. Attached only to the
+# default (website) behavior, so API responses, including real 404s, are never rewritten.
+resource "aws_cloudfront_function" "spa_rewrite" {
+  count   = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
+  name    = format("%s-spa-rewrite-%s", var.aws_project, local.app_id)
+  runtime = "cloudfront-js-2.0"
+  comment = "Serve index.html for client-side routes"
+  publish = true
+  code    = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      var lastSegment = request.uri.split("/").pop();
+      if (lastSegment.indexOf(".") === -1) {
+        request.uri = "/index.html";
+      }
+      return request;
+    }
+  EOT
 }
