@@ -3,7 +3,7 @@
 import psycopg
 
 from api.auth import password_problems
-from core import db
+from core import audit, db
 from core.app import router
 from core.auth import PUBLIC_USER_COLUMNS, ROLES, require_auth
 from core.http import ApiError, response
@@ -26,6 +26,10 @@ _STATUS_FILTERS = ("active", "archived", "all")
 
 
 # ---------- helpers ----------
+
+def _label(user):
+    return f"{user['first_name']} {user['last_name']}"
+
 
 def _fetch_user(cur, user_id):
     cur.execute(f"SELECT {PUBLIC_USER_COLUMNS} FROM users WHERE id = %s", (user_id,))
@@ -111,6 +115,10 @@ def create_user(req):
         except psycopg.errors.UniqueViolation as exc:
             raise ApiError(409, "Email is already in use", {"email": "is already in use"}) from exc
         user = cur.fetchone()
+        audit.record(
+            cur, req.user, "create", "user", user["id"], _label(user),
+            audit.snapshot(user, ("username", "email", "role", "manager_id", "job_title", "hourly_rate")),
+        )
     return response(201, user)
 
 
@@ -265,6 +273,9 @@ def update_user(req):
         except psycopg.errors.UniqueViolation as exc:
             raise ApiError(409, "Email is already in use", {"email": "is already in use"}) from exc
         updated = cur.fetchone()
+        changes = audit.diff(user, values)
+        if changes:
+            audit.record(cur, req.user, "update", "user", user_id, _label(updated), changes)
     return response(200, updated)
 
 
@@ -285,6 +296,7 @@ def archive_user(req):
                 "UPDATE users SET is_archived = TRUE, updated_at = NOW() WHERE id = %s",
                 (user_id,),
             )
+            audit.record(cur, req.user, "archive", "user", user_id, _label(user))
     return response(204)
 
 
@@ -309,4 +321,5 @@ def unarchive_user(req):
             (user_id,),
         )
         restored = cur.fetchone()
+        audit.record(cur, req.user, "unarchive", "user", user_id, _label(restored))
     return response(200, restored)

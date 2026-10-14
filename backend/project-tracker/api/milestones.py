@@ -4,7 +4,7 @@ from datetime import date, datetime, timezone
 
 from api.assignments import _check_dates_within_project
 from api.projects import ensure_can_manage, fetch_visible_project
-from core import db
+from core import audit, db
 from core.app import router
 from core.auth import require_auth
 from core.http import ApiError, response
@@ -103,6 +103,11 @@ def create_milestone(req):
             ),
         )
         milestone = _with_flags(cur.fetchone())
+        audit.record(
+            cur, req.user, "create", "milestone", milestone["id"], milestone["name"],
+            audit.snapshot(milestone, ("name", "start_date", "end_date", "status")),
+            project_id=project_id,
+        )
     return response(201, milestone)
 
 
@@ -136,6 +141,12 @@ def update_milestone(req):
             (*values.values(), milestone_id),
         )
         milestone = _with_flags(cur.fetchone())
+        changes = audit.diff(current, {k: v for k, v in values.items() if k != "completed_at"})
+        if changes:
+            audit.record(
+                cur, req.user, "update", "milestone", milestone_id, milestone["name"], changes,
+                project_id=project_id,
+            )
     return response(200, milestone)
 
 
@@ -152,4 +163,9 @@ def delete_milestone(req):
         if current["status"] != "not_started":
             raise ApiError(409, "Only milestones that haven't started can be deleted")
         cur.execute("DELETE FROM milestones WHERE id = %s", (milestone_id,))
+        audit.record(
+            cur, req.user, "delete", "milestone", milestone_id, current["name"],
+            audit.snapshot(current, ("name", "start_date", "end_date", "status")),
+            project_id=project_id,
+        )
     return response(204)

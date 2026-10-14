@@ -107,3 +107,39 @@ SELECT
     ) AS worked_hours
 FROM project_assignments a
 JOIN users u ON u.id = a.user_id;
+
+-- Audit log: append-only record of every change (who, what, when, before/after)
+CREATE TABLE IF NOT EXISTS audit_log (
+    id           BIGSERIAL PRIMARY KEY,
+    actor_id     INTEGER REFERENCES users(id),
+    actor_name   VARCHAR(201),
+    actor_role   VARCHAR(20),
+    action       VARCHAR(30)  NOT NULL,
+    entity_type  VARCHAR(30)  NOT NULL,
+    entity_id    INTEGER,
+    entity_label VARCHAR(255),
+    project_id   INTEGER REFERENCES projects(id),
+    changes      JSONB,
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_log(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_entity  ON audit_log(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_actor   ON audit_log(actor_id);
+
+-- Enforce append-only: the database itself rejects edits and deletes of audit entries
+CREATE OR REPLACE FUNCTION audit_log_is_append_only() RETURNS trigger AS $$
+BEGIN
+    RAISE EXCEPTION 'audit_log is append-only: % is not allowed', TG_OP;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS audit_log_no_changes ON audit_log;
+CREATE TRIGGER audit_log_no_changes
+    BEFORE UPDATE OR DELETE ON audit_log
+    FOR EACH ROW EXECUTE FUNCTION audit_log_is_append_only();
+
+DROP TRIGGER IF EXISTS audit_log_no_truncate ON audit_log;
+CREATE TRIGGER audit_log_no_truncate
+    BEFORE TRUNCATE ON audit_log
+    FOR EACH STATEMENT EXECUTE FUNCTION audit_log_is_append_only();

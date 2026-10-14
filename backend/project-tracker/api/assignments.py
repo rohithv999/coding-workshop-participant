@@ -5,7 +5,7 @@ from datetime import date
 import psycopg
 
 from api.projects import ensure_can_manage, fetch_visible_project
-from core import db
+from core import audit, db
 from core.app import router
 from core.auth import require_auth
 from core.http import ApiError, response
@@ -153,6 +153,11 @@ def create_assignment(req):
             cur, project_id, values["user_id"], hours, values["start_date"], values["end_date"]
         )
         assignment = _fetch_assignment(cur, project_id, new_id)
+        audit.record(
+            cur, req.user, "create", "assignment", new_id,
+            f"{assignment['user_name']} on {project['name']}",
+            audit.snapshot(assignment, ("user_id", "user_name", "hours_per_day", "start_date", "end_date")), project_id=project_id,
+        )
     return response(201, assignment)
 
 
@@ -217,7 +222,14 @@ def assign_team(req):
             new_id = _insert_assignment(
                 cur, project_id, member["id"], hours, values["start_date"], values["end_date"]
             )
-            assigned.append(_fetch_assignment(cur, project_id, new_id))
+            assignment = _fetch_assignment(cur, project_id, new_id)
+            assigned.append(assignment)
+            audit.record(
+                cur, req.user, "create", "assignment", new_id,
+                f"{assignment['user_name']} on {project['name']}",
+                {**audit.snapshot(assignment, ("user_id", "user_name", "hours_per_day", "start_date", "end_date")), "via": "team assignment"},
+                project_id=project_id,
+            )
 
     return response(201 if assigned else 200, {"assigned": assigned, "skipped": skipped})
 
@@ -248,6 +260,12 @@ def update_assignment(req):
             (*values.values(), assignment_id),
         )
         updated = _fetch_assignment(cur, project_id, assignment_id)
+        changes = audit.diff(current, values)
+        if changes:
+            audit.record(
+                cur, req.user, "update", "assignment", assignment_id,
+                f"{current['user_name']} on {project['name']}", changes, project_id=project_id,
+            )
     return response(200, updated)
 
 
@@ -266,11 +284,20 @@ def remove_assignment(req):
         current = _fetch_assignment(cur, project_id, assignment_id)
 
         today = date.today()
+        label = f"{current['user_name']} on {project['name']}"
         if current["start_date"] > today:
             cur.execute("DELETE FROM project_assignments WHERE id = %s", (assignment_id,))
+            audit.record(
+                cur, req.user, "delete", "assignment", assignment_id, label,
+                audit.snapshot(current, ("user_id", "user_name", "hours_per_day", "start_date", "end_date")), project_id=project_id,
+            )
         elif current["end_date"] > today:
             cur.execute(
                 "UPDATE project_assignments SET end_date = %s WHERE id = %s",
                 (today, assignment_id),
+            )
+            audit.record(
+                cur, req.user, "end", "assignment", assignment_id, label,
+                audit.diff(current, {"end_date": today}), project_id=project_id,
             )
     return response(204)

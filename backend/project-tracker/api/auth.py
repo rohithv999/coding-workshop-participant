@@ -1,6 +1,6 @@
 """Auth endpoints: login, refresh, current user, change password."""
 
-from core import db
+from core import audit, db
 from core.app import router
 from core.auth import (
     PUBLIC_USER_COLUMNS,
@@ -108,6 +108,10 @@ def update_me(req):
             (*updates.values(), req.user["id"]),
         )
         user = cur.fetchone()
+        changes = audit.diff(req.user, updates)
+        if changes:
+            label = f"{user['first_name']} {user['last_name']}"
+            audit.record(cur, req.user, "update", "user", user["id"], label, changes)
     return response(200, user)
 
 
@@ -135,4 +139,6 @@ def change_password(req):
             "UPDATE users SET password_hash = %s, updated_at = NOW() WHERE id = %s",
             (hash_password(new), req.user["id"]),
         )
+        label = f"{req.user['first_name']} {req.user['last_name']}"
+        audit.record(cur, req.user, "change_password", "user", req.user["id"], label)
     return response(204)

@@ -3,7 +3,7 @@
 from datetime import date
 
 from api.users import _ensure_active_manager
-from core import db
+from core import audit, db
 from core.app import router
 from core.auth import require_auth
 from core.http import ApiError, response
@@ -141,6 +141,11 @@ def create_project(req):
             ),
         )
         project = fetch_visible_project(cur, cur.fetchone()["id"], req.user)
+        audit.record(
+            cur, req.user, "create", "project", project["id"], project["name"],
+            audit.snapshot(project, ("name", "manager_id", "start_date", "end_date", "budget")),
+            project_id=project["id"],
+        )
     return response(201, project)
 
 
@@ -250,6 +255,14 @@ def update_project(req):
             (*values.values(), project_id),
         )
         updated = fetch_visible_project(cur, project_id, req.user)
+        changes = audit.diff(project, values)
+        if "budget" in changes and reason:
+            changes["budget"]["reason"] = reason
+        if changes:
+            audit.record(
+                cur, req.user, "update", "project", project_id, updated["name"], changes,
+                project_id=project_id,
+            )
     return response(200, updated)
 
 
@@ -278,6 +291,10 @@ def complete_project(req):
             "UPDATE projects SET status = 'done', updated_at = NOW() WHERE id = %s",
             (project_id,),
         )
+        audit.record(
+            cur, req.user, "complete", "project", project_id, project["name"],
+            {"status": {"from": "active", "to": "done"}}, project_id=project_id,
+        )
         updated = fetch_visible_project(cur, project_id, req.user)
     return response(200, updated)
 
@@ -296,6 +313,10 @@ def reopen_project(req):
             "UPDATE projects SET status = 'active', updated_at = NOW() WHERE id = %s",
             (project_id,),
         )
+        audit.record(
+            cur, req.user, "reopen", "project", project_id, project["name"],
+            {"status": {"from": "done", "to": "active"}}, project_id=project_id,
+        )
         updated = fetch_visible_project(cur, project_id, req.user)
     return response(200, updated)
 
@@ -312,6 +333,9 @@ def archive_project(req):
                 "UPDATE projects SET is_archived = TRUE, archived_at = NOW(), updated_at = NOW() "
                 "WHERE id = %s",
                 (project_id,),
+            )
+            audit.record(
+                cur, req.user, "archive", "project", project_id, project["name"], project_id=project_id,
             )
     return response(204)
 
@@ -346,6 +370,10 @@ def unarchive_project(req):
             (manager_id, project_id),
         )
         restored = fetch_visible_project(cur, project_id, req.user)
+        audit.record(
+            cur, req.user, "unarchive", "project", project_id, restored["name"],
+            audit.diff(project, {"manager_id": manager_id}) or None, project_id=project_id,
+        )
     return response(200, restored)
 
 
