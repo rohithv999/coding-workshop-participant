@@ -15,6 +15,7 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import EmptyState from "../components/EmptyState";
 import ErrorState from "../components/ErrorState";
 import LoadingState from "../components/LoadingState";
+import BudgetHistoryTab from "../components/projects/BudgetHistoryTab";
 import MilestonesTab from "../components/projects/MilestonesTab";
 import ProjectFormDialog from "../components/projects/ProjectFormDialog";
 import TeamTab from "../components/projects/TeamTab";
@@ -79,10 +80,6 @@ function OverviewTab({ project }) {
       </Card>
     </Stack>
   );
-}
-
-function ComingNext({ name }) {
-  return <EmptyState title={`${name} coming next`} message="This tab is built in the next step." />;
 }
 
 export default function ProjectDetailPage() {
@@ -256,7 +253,7 @@ export default function ProjectDetailPage() {
       {tab === "team" && (
         <TeamTab project={project} canManage={canManage} onChanged={reload} onNotice={setNotice} />
       )}
-      {tab === "budget" && showBudgetTab && <ComingNext name="Budget history" />}
+      {tab === "budget" && showBudgetTab && <BudgetHistoryTab project={project} />}
 
       {editing && (
         <ProjectFormDialog
