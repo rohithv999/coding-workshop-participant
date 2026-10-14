@@ -291,6 +291,7 @@ export default function UsersPage() {
                 throw new Error(
                   `${err.message} (${d.active_projects} active ${d.active_projects === 1 ? "project" : "projects"}, ` +
                     `${d.active_employees} ${d.active_employees === 1 ? "employee" : "employees"}).`,
+                  { cause: err },
                 );
               }
               throw err;
