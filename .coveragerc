@@ -1,0 +1,10 @@
+[run]
+source = backend/project-tracker
+omit =
+    backend/project-tracker/psycopg*/*
+    backend/project-tracker/jwt/*
+    backend/project-tracker/*.dist-info/*
+    backend/project-tracker/typing_extensions.py
+
+[report]
+skip_empty = true
