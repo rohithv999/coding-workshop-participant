@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ArchivePage from "./pages/ArchivePage";
+import AuditLogPage from "./pages/AuditLogPage";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -27,6 +28,7 @@ export default function App() {
           </Route>
           <Route element={<ProtectedRoute roles={["admin"]} />}>
             <Route path="archive" element={<ArchivePage />} />
+            <Route path="audit-log" element={<AuditLogPage />} />
           </Route>
         </Route>
       </Route>

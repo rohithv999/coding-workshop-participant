@@ -62,3 +62,6 @@ export const milestonesApi = {
   remove: (projectId, milestoneId) =>
     api.del(`/projects/${projectId}/milestones/${milestoneId}`),
 };
+export const auditApi = {
+  list: (filters) => api.get("/audit-log", filters),
+};
